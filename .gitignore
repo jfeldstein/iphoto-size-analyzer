@@ -25,8 +25,8 @@ venv/
 ENV/
 
 # Output files
-photos_library_growth.png
-photos_library_growth.csv
+/photos_library_growth.png
+/photos_library_growth.csv
 
 # OS specific files
 .DS_Store

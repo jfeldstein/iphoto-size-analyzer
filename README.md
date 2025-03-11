@@ -2,6 +2,8 @@
 
 This script analyzes how your Photos Library has grown in size over time by month.
 
+![Sample Output](examples/sample_output.png)
+
 ## Features
 
 - Measures the size of media added to your Photos Library each month
@@ -9,6 +11,19 @@ This script analyzes how your Photos Library has grown in size over time by mont
 - Generates visualizations of monthly and cumulative growth
 - Provides summary statistics about your library growth
 - Exports data to CSV for further analysis
+
+## Example Output
+
+The script generates two main visualizations:
+1. **Monthly Growth**: Shows how much data (in GB) was added to your Photos Library each month
+2. **Cumulative Growth**: Shows the total size of your Photos Library over time
+
+It also provides summary statistics such as:
+- Total library size
+- Average monthly growth
+- Maximum monthly growth
+- Recent growth trends (3, 6, and 12 months)
+- Top months with highest growth
 
 ## Requirements
 
