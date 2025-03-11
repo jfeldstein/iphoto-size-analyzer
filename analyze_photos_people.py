@@ -6,13 +6,54 @@ import seaborn as sns
 from datetime import datetime
 import os
 import numpy as np
+import hashlib
+import random
 
 # Path to the Photos Library database
 PHOTOS_DB_PATH = "/Users/jordan/Pictures/Photos Library.photoslibrary/database/Photos.sqlite"
 
+# Flag to enable name anonymization
+ANONYMIZE_NAMES = True
+
+# List of fictional first names for anonymization
+FICTIONAL_FIRST_NAMES = [
+    "Zephyr", "Luna", "Atlas", "Nova", "Orion", "Sage", "Phoenix", "Echo", "Caspian", "Aurora",
+    "Ember", "Indigo", "Jasper", "Lyra", "Cosmo", "Juniper", "Cypress", "Solstice", "Zenith", "Nebula",
+    "Fable", "Quasar", "Tempest", "Vesper", "Wren", "Zion", "Astro", "Borealis", "Celestial", "Dune",
+    "Everest", "Frost", "Galaxy", "Horizon", "Infinity", "Jupiter", "Krypton", "Legacy", "Meridian", "Neon",
+    "Olympus", "Pixel", "Quantum", "Rogue", "Stellar", "Tundra", "Utopia", "Vortex", "Whisper", "Xenon"
+]
+
+# List of fictional last names for anonymization
+FICTIONAL_LAST_NAMES = [
+    "Starlight", "Moonbeam", "Thunderbolt", "Winterfall", "Summercrest", "Nightshade", "Daybreak", "Skydancer", "Fireforge", "Stormchaser",
+    "Dreamweaver", "Shadowheart", "Lightbringer", "Cloudwalker", "Riverdance", "Mountaincrest", "Oceantide", "Windwhisper", "Sunseeker", "Moonshadow",
+    "Stardust", "Frostfire", "Wildflower", "Silverbrook", "Goldenhawk", "Ironwood", "Crystalclear", "Emeraldsky", "Sapphirewave", "Rubyheart",
+    "Diamondpeak", "Amberlight", "Pearlriver", "Jadeforest", "Obsidiannight", "Marblegleam", "Coralreef", "Azuresky", "Crimsonflame", "Violetdusk",
+    "Indigomist", "Tealbreeze", "Magentabloom", "Vermilionrise", "Ceruleanfall", "Sienna", "Hazel", "Cobalt", "Amber", "Slate"
+]
+
 def connect_to_db(db_path):
     """Connect to the SQLite database."""
     return sqlite3.connect(db_path)
+
+def anonymize_name(name, person_id=None):
+    """Anonymize a person's name with a fictional but consistent name."""
+    if not ANONYMIZE_NAMES:
+        return name
+    
+    # Use the hash of the original name to ensure consistent anonymization
+    hash_object = hashlib.md5(name.encode())
+    hash_int = int(hash_object.hexdigest(), 16)
+    
+    # Use the hash to deterministically select first and last names
+    first_name_index = hash_int % len(FICTIONAL_FIRST_NAMES)
+    last_name_index = (hash_int // len(FICTIONAL_FIRST_NAMES)) % len(FICTIONAL_LAST_NAMES)
+    
+    first_name = FICTIONAL_FIRST_NAMES[first_name_index]
+    last_name = FICTIONAL_LAST_NAMES[last_name_index]
+    
+    return f"{first_name} {last_name}"
 
 def get_people_data(conn):
     """Query the database to get data about people in the Photos Library."""
@@ -36,6 +77,14 @@ def get_people_data(conn):
     """
     
     df = pd.read_sql_query(query, conn)
+    
+    # Anonymize names if enabled
+    if ANONYMIZE_NAMES:
+        # Store original names for internal reference
+        df['original_name'] = df['person_name']
+        # Apply anonymization
+        df['person_name'] = df.apply(lambda row: anonymize_name(row['person_name'], row['person_id']), axis=1)
+    
     return df
 
 def get_people_timeline(conn):
@@ -60,6 +109,11 @@ def get_people_timeline(conn):
     """
     
     df = pd.read_sql_query(query, conn)
+    
+    # Anonymize names if enabled
+    if ANONYMIZE_NAMES:
+        # Apply anonymization
+        df['person_name'] = df.apply(lambda row: anonymize_name(row['person_name'], row['person_id']), axis=1)
     
     # Convert timestamps from Mac Core Data format (seconds since 2001-01-01) to Python datetime
     # Mac Core Data epoch is 2001-01-01
@@ -173,8 +227,15 @@ def print_people_statistics(people_df):
 
 def export_to_csv(people_df):
     """Export the people data to a CSV file."""
+    # Create a copy to avoid modifying the original dataframe
+    export_df = people_df.copy()
+    
+    # Remove the original_name column if it exists (for privacy)
+    if 'original_name' in export_df.columns:
+        export_df = export_df.drop(columns=['original_name'])
+        
     csv_path = 'photos_people_data.csv'
-    people_df.to_csv(csv_path, index=False)
+    export_df.to_csv(csv_path, index=False)
     print(f"Data exported to {csv_path}")
 
 def main():
