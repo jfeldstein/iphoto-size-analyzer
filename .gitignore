@@ -27,6 +27,9 @@ ENV/
 # Output files
 /photos_library_growth.png
 /photos_library_growth.csv
+/photos_people_count.png
+/photos_people_timeline.png
+/photos_people_data.csv
 
 # OS specific files
 .DS_Store
